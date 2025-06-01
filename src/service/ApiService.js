@@ -2,8 +2,6 @@ import axios from "axios";
 export default class ApiService {
   
     static BASE_URL = process.env.REACT_APP_API_URL;
-  console.log("URL"+BASE_URL);
-
     static getHeaders() {
         const token = localStorage.getItem("token");
         return {
@@ -109,6 +107,7 @@ export default class ApiService {
 
     /* This  gets all room types from thee database */
     static async getRoomTypes() {
+	      console.log("URL"+BASE_URL);
         const response = await axios.get(`${this.BASE_URL}/rooms/types`)
         return response.data
     }
