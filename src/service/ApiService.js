@@ -2,7 +2,7 @@ import axios from "axios";
 export default class ApiService {
   
     static BASE_URL = process.env.REACT_APP_API_URL;
-	// console.log(BASE_URL);
+	
     static getHeaders() {
         const token = localStorage.getItem("token");
         return {
@@ -92,6 +92,7 @@ export default class ApiService {
 
     // getAllAvailableRoom
     static async getAllAvailableRoom(){
+	    console.log(BASE_URL);
         const result= await axios.get(`${this.BASE_URL}/rooms/all-available-rooms`)
         return result.data;
     }
