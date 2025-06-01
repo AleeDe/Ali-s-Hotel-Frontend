@@ -3,6 +3,7 @@ import { FaWhatsapp } from 'react-icons/fa';
 
 function WhatsAppLink() {
   const phoneNumber = process.env.REACT_APP_WHATSAPP_PHONE_NUMBER;
+  console.log(phoneNumber);
   const message = 'Hello, I would like to chat!';
 
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
