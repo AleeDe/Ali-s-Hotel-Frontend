@@ -93,7 +93,6 @@ export default class ApiService {
 
     // getAllAvailableRoom
     static async getAllAvailableRoom(){
-	    console.log(BASE_URL);
         const result= await axios.get(`${this.BASE_URL}/rooms/all-available-rooms`)
         return result.data;
     }
@@ -110,7 +109,7 @@ export default class ApiService {
 
     /* This  gets all room types from thee database */
     static async getRoomTypes() {
-	      console.log("URL"+BASE_URL);
+	      console.log("URL"+this.BASE_URL);
         const response = await axios.get(`${this.BASE_URL}/rooms/types`)
         return response.data
     }
@@ -149,7 +148,6 @@ export default class ApiService {
     /* This  saves a new booking to the databse */
     static async bookRoom(roomId, userId, booking) {
 
-        console.log("USER ID IS: " + userId)
 
         const response = await axios.post(`${this.BASE_URL}/bookings/book-room/${roomId}/${userId}`, booking, {
             headers: this.getHeaders()
