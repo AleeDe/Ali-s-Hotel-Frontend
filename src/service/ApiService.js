@@ -1,7 +1,7 @@
 import axios from "axios";
 export default class ApiService {
   
-    static BASE_URL = "https://a-resort.onrender.com";
+    static BASE_URL = process.env.REACT_APP_API_URL;
 
 	
     static getHeaders() {
