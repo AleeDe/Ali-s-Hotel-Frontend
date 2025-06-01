@@ -1,7 +1,7 @@
 import axios from "axios";
 export default class ApiService {
   
-    static BASE_URL = process.env.REACT_APP_BASE_URL;
+    static BASE_URL = import.meta.env.VITE_REACT_APP_WHATSAPP_PHONE_NUMBER;
 
     static getHeaders() {
         const token = localStorage.getItem("token");
