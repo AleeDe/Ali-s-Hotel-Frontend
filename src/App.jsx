@@ -18,6 +18,7 @@ import ProfilePage from './component/profile/ProfilePage';
 import ApiService from './service/ApiService';
 import WhatsAppLink from './service/WhatsAppLink'
 import { ToastContainer, toast } from 'react-toastify';
+import PaymentSuccess from "./component/payment_success/PaymentSuccess";
 
 // import { ProtectedRoute, AdminRoute } from './service/gaurd';
 
@@ -78,6 +79,7 @@ export default function App() {
            <Route path="/profile" element={<ProtectedRoute element={() => <ProfilePage />} />} />
            <Route path="/edit-profile" element={<ProtectedRoute element={() => <EditProfilePage />} />} />
 
+          <Route path="/payment-success" element={<ProtectedRoute element={() => <PaymentSuccess />} />} />
 
 
 

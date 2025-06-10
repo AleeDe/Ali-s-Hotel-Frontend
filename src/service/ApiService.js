@@ -176,6 +176,13 @@ export default class ApiService {
         return result.data
     }
 
+    static async checkoutProducts(paymentRequest) {
+    const result = await axios.post(`${this.BASE_URL}/product/v1/checkout`, paymentRequest, {
+        headers: this.getHeaders()
+    });
+    return result.data;
+}
+
 
     /**AUTHENTICATION CHECKER */
     static logout() {
@@ -197,4 +204,6 @@ export default class ApiService {
         const role = localStorage.getItem('role')
         return role === 'USER'
     }
+
+
 }

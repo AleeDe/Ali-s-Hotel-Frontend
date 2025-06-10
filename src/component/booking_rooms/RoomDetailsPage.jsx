@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ApiService from '../../service/ApiService';
 import DatePicker from 'react-datepicker';
@@ -76,35 +76,53 @@ const RoomDetailsPage = () => {
       const formattedCheckInDate = new Date(startDate.getTime() - (startDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
       const formattedCheckOutDate = new Date(endDate.getTime() - (endDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
+      // Check availability first and show loading toast
+      const loadingToastId = toast.loading("Checking room availability...");
+      const availabilityResponse = await ApiService.getAvailableRoomsByDateAndType(formattedCheckInDate, formattedCheckOutDate, roomDetails.roomType);
+      toast.dismiss(loadingToastId);
+
+      if (availabilityResponse.statusCode !== 200) {
+      toast.error("Room is not available for selected dates!");
+      return;
+      }
+
+      // Step 2: Trigger Payment API
       const booking = {
-        checkInDate: formattedCheckInDate,
-        checkOutDate: formattedCheckOutDate,
-        numOfAdults: numAdults,
-        numOfChildren: numChildren,
+      checkInDate: formattedCheckInDate,
+      checkOutDate: formattedCheckOutDate,
+      numOfAdults: numAdults,
+      numOfChildren: numChildren,
       };
 
+      const paymentRequest = { roomType: roomDetails.roomType, roomPrice: totalPrice, currency: "USD", quantity: 1 };
+      const paymentResponse = await ApiService.checkoutProducts(paymentRequest);
+
+      if (paymentResponse.status === "Success") {
+      // Redirect to Stripe Payment Page
       const response = await ApiService.bookRoom(roomId, userId, booking);
-      
-      toast.success("Room Book Suuessful!");
+
+      toast.success("Room Book Successful!");
       if (response.statusCode === 201) {
-        setConfirmationCode(response.bookingConfirmationCode);
-        setShowMessage(true);
-        setTimeout(() => {
-          setShowMessage(false);
-          navigate('/rooms');
-        }, 2000);
+        localStorage.setItem('bookingConfirmationCode', response.bookingConfirmationCode);
+        localStorage.setItem('bookingType', response.booking);
+        window.location.href = paymentResponse.sessionUrl;
       }
+      if(response && response.status === 404){
+        toast.error("Room Already Book Selected Date!");
+      }
+      else if (response && response.status === 500){
+        toast.error("check-in-Date smaller than check-out-date!");
+      }
+      else{
+        toast.error("Network Error");
+      }
+      } else {
+      toast.error("Payment session creation failed!");
+      return;
+      }
+      
     } catch (error) {
-      if(error.response && error.response.status === 404){
-                  toast.error("Room Already Book Selected Date!");
-                  }
-                  else if (error.response && error.response.status === 500){
-                    toast.error("check-in-Date smaller than check-out-date!");
-                  }
-                  else{
-                      toast.error("Network Error");
-                  }
-      setTimeout(() => setErrorMessage(''), 5000);
+      toast.error(error?.response?.data?.message || error.message || "An error occurred during booking.");
     }
   };
 
