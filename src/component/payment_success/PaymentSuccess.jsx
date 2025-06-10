@@ -1,34 +1,63 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { CheckCircle, Calendar, MapPin, Users, CreditCard, Download, Loader2 } from "lucide-react"
+import { CheckCircle, Calendar, MapPin, Users, CreditCard, Download, Loader2, User, Clock } from "lucide-react"
 import html2canvas from "html2canvas"
-
+import ApiService from "../../service/ApiService"
 
 export default function PaymentSuccess() {
   const [bookingDetails, setBookingDetails] = useState(null)
-  const [user,setUser]= useState(null);
-  const [room,setRoom]= useState(null);
+  const [user, setUser] = useState(null)
+  const [room, setRoom] = useState(null)
   const receiptRef = useRef(null)
   const [isDownloading, setIsDownloading] = useState(false)
   const [notification, setNotification] = useState(null)
-const [confirmationCode, setConfirmationCode] = useState("");
-  const [details, setDetails] = useState(null);
+  const [confirmationCode, setConfirmationCode] = useState("")
+  const [details, setDetails] = useState(null)
+  const [totalDays, setTotalDays] = useState(0)
+  const [totalPrice, setTotalPrice] = useState(0)
 
   // Retrieve confirmation code from localStorage
-  useEffect(async () => {
-    const storedCode = localStorage.getItem("bookingConfirmationCode");
-    
-  }, []);
+  useEffect(() => {
+    const storedCode = localStorage.getItem("bookingConfirmationCode")
+    if (storedCode) {
+      setConfirmationCode(storedCode)
+      console.log("Confirmation code retrieved:", storedCode)
+    }
+  }, [])
 
+  useEffect(() => {
+    const fetchBookingDetails = async () => {
+      if (confirmationCode) {
+        try {
+          const response = await ApiService.getBookingByConfirmationCode(confirmationCode)
+          setDetails(response)
+          console.log("Booking details retrieved:", response)
+          setBookingDetails(response.booking)
+          setRoom(response.room)
+          console.log("Room details retrieved:", response.room)
+          setUser(response.user)
+          console.log("User details retrieved:", response.user)
 
+          if (response.booking) {
+            const checkInDate = new Date(response.booking.checkInDate)
+            const checkOutDate = new Date(response.booking.checkOutDate)
+            const totalDays = (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)
+            setTotalDays(totalDays)
+            setTotalPrice(room.roomPrice * totalDays)
+          }
+        } catch (error) {
+          console.error("Error fetching booking details:", error)
+        }
+      }
+    }
 
+    fetchBookingDetails()
+  }, [confirmationCode])
 
   // Function to download receipt as image
   const handleDownloadReceipt = async () => {
     if (!receiptRef.current) return
-
-    
 
     try {
       setIsDownloading(true)
@@ -42,7 +71,7 @@ const [confirmationCode, setConfirmationCode] = useState("");
       const image = canvas.toDataURL("image/png")
       const link = document.createElement("a")
       link.href = image
-      link.download = "booking-receipt-RB-2024-001234.png"
+      link.download = `booking-receipt-${confirmationCode}.png`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -63,7 +92,42 @@ const [confirmationCode, setConfirmationCode] = useState("");
       setIsDownloading(false)
     }
   }
-  
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A"
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
+
+  // Format transaction time
+  const formatTransactionTime = () => {
+    if (!bookingDetails?.bookingConfirmationCode) return "N/A"
+    const now = new Date()
+    return now.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    })
+  }
+
+  if (!bookingDetails || !user || !room) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-green-600" />
+          <p className="text-gray-600">Loading booking details...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4">
@@ -98,6 +162,19 @@ const [confirmationCode, setConfirmationCode] = useState("");
             </div>
             <div className="p-6">
               <div className="space-y-4">
+                {/* Guest Details */}
+                <div className="flex items-start space-x-3">
+                  <User className="w-5 h-5 text-gray-500 mt-1" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Guest Details</h3>
+                    <p className="text-gray-600">{user.name}</p>
+                    <p className="text-gray-600">{user.email}</p>
+                    <p className="text-gray-600">{user.phoneNumber}</p>
+                  </div>
+                </div>
+
+                <hr className="border-gray-200" />
+
                 {/* Hotel Info */}
                 <div className="flex items-start space-x-3">
                   <MapPin className="w-5 h-5 text-gray-500 mt-1" />
@@ -115,7 +192,7 @@ const [confirmationCode, setConfirmationCode] = useState("");
                     <Calendar className="w-5 h-5 text-gray-500" />
                     <div>
                       <p className="font-medium text-gray-900">Check-in</p>
-                      <p className="text-gray-600">Dec 15, 2024</p>
+                      <p className="text-gray-600">{formatDate(bookingDetails.checkInDate)}</p>
                       <p className="text-sm text-gray-500">3:00 PM</p>
                     </div>
                   </div>
@@ -123,7 +200,7 @@ const [confirmationCode, setConfirmationCode] = useState("");
                     <Calendar className="w-5 h-5 text-gray-500" />
                     <div>
                       <p className="font-medium text-gray-900">Check-out</p>
-                      <p className="text-gray-600">Dec 18, 2024</p>
+                      <p className="text-gray-600">{formatDate(bookingDetails.checkOutDate)}</p>
                       <p className="text-sm text-gray-500">11:00 AM</p>
                     </div>
                   </div>
@@ -135,8 +212,22 @@ const [confirmationCode, setConfirmationCode] = useState("");
                 <div className="flex items-center space-x-3">
                   <Users className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="font-medium text-gray-900">Deluxe </p>
-                    <p className="text-gray-600">2 Adults • 1 Child • 3 Nights</p>
+                    <p className="font-medium text-gray-900">{room.roomType}</p>
+                    <p className="text-gray-600">
+                      {bookingDetails.numOfAdults} Adults • {bookingDetails.numOfChildren} Children • {totalDays} Nights
+                    </p>
+                  </div>
+                </div>
+
+                <hr className="border-gray-200" />
+
+                {/* Transaction Details */}
+                <div className="flex items-center space-x-3">
+                  <Clock className="w-5 h-5 text-gray-500" />
+                  <div>
+                    <p className="font-medium text-gray-900">Transaction Time</p>
+                    <p className="text-gray-600">{formatTransactionTime()}</p>
+                    <p className="text-sm text-gray-500">Transaction ID: {bookingDetails.bookingConfirmationCode}</p>
                   </div>
                 </div>
 
@@ -148,10 +239,11 @@ const [confirmationCode, setConfirmationCode] = useState("");
                     <CreditCard className="w-5 h-5 text-gray-500" />
                     <div>
                       <p className="font-medium text-gray-900">Payment Method</p>
+                      <p className="text-gray-600">Credit Card</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-2xl text-gray-900">$459.00</p>
+                    <p className="font-semibold text-2xl text-gray-900">${totalPrice}</p>
                     <p className="text-sm text-gray-500">Total Amount</p>
                   </div>
                 </div>

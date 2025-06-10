@@ -59,7 +59,7 @@ const RoomDetailsPage = () => {
     const oneDay = 24 * 60 * 60 * 1000;
     const startDate = new Date(checkInDate);
     const endDate = new Date(checkOutDate);
-    const totalDays = Math.round(Math.abs((endDate - startDate) / oneDay)) + 1;
+    const totalDays = Math.round(Math.abs((endDate - startDate) / oneDay)) ;
 
     const totalGuests = numAdults + numChildren;
     const totalPrice = roomDetails.roomPrice * totalDays;
